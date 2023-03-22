@@ -11,12 +11,14 @@ import (
 )
 
 func HandleAPIRequest(c *gin.Context) {
+
 	// Check if the results are already cached
 	cacheKey := "results"
 	cachedResult, found := GetFromCache(cacheKey)
 	if found {
 		// If the results are cached, return them directly
 		result, ok := cachedResult.([]interface{})
+
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "cached result is of invalid type"})
 			return
@@ -30,6 +32,7 @@ func HandleAPIRequest(c *gin.Context) {
 
 	// Make a request to another API
 	resp, err := http.Get("https://hacker-news.firebaseio.com/v0/topstories.json")
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -38,16 +41,16 @@ func HandleAPIRequest(c *gin.Context) {
 
 	// Read the response body
 	body, err := ioutil.ReadAll(resp.Body)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	fmt.Println(string(body))
-
 	// Unmarshal the response body into a slice of integers
 	var data []int
 	err = json.Unmarshal(body, &data)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -71,6 +74,7 @@ func HandleAPIRequest(c *gin.Context) {
 				// If the result is not cached, make the API request and cache the result
 				url := fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%d.json", id)
 				resp, err := http.Get(url)
+
 				if err != nil {
 					fmt.Println("Error making request to API:", err)
 					return
@@ -79,6 +83,7 @@ func HandleAPIRequest(c *gin.Context) {
 
 				// Read the response body
 				body, err := ioutil.ReadAll(resp.Body)
+
 				if err != nil {
 					fmt.Println("Error reading response body:", err)
 					return
@@ -87,6 +92,7 @@ func HandleAPIRequest(c *gin.Context) {
 				// Unmarshal the response body into an interface{}
 				var responseData interface{}
 				err = json.Unmarshal(body, &responseData)
+
 				if err != nil {
 					fmt.Println("Error unmarshalling response body:", err)
 					return
