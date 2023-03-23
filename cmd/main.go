@@ -14,6 +14,7 @@ func main() {
 	api.InitializeCache()
 
 	r.GET("/api", api.HandleAPIRequest)
+	r.GET("/api/:item", api.HandleItemRequest)
 
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }

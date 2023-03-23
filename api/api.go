@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -65,7 +66,7 @@ func HandleAPIRequest(c *gin.Context) {
 			defer wg.Done()
 
 			// Check if the result for this ID is already cached
-			cacheKey := fmt.Sprintf("result-%d", id)
+			cacheKey := fmt.Sprintf("story-%v", id)
 			cachedResult, found := GetFromCache(cacheKey)
 			if found {
 				// If the result is cached, add it to the result slice
@@ -99,6 +100,7 @@ func HandleAPIRequest(c *gin.Context) {
 				}
 
 				// Cache the result
+				fmt.Println("Added key to cache:", cacheKey)
 				AddToCache(cacheKey, responseData)
 
 				results[i] = responseData
@@ -111,4 +113,49 @@ func HandleAPIRequest(c *gin.Context) {
 	AddToCache(cacheKey, results)
 	c.Header("Content-Type", "application/json")
 	c.JSON(http.StatusOK, results)
+}
+
+func HandleItemRequest(c *gin.Context) {
+	item := c.Param("item")
+
+	// Check if the result for this item is already cached
+	cacheKey := fmt.Sprintf("story-%v", item)
+	cachedResult, found := GetFromCache(cacheKey)
+	if found {
+		// If the result is cached, return it directly
+		c.Header("Content-Type", "application/json")
+		c.JSON(http.StatusOK, cachedResult)
+		return
+	}
+
+	// Make a request to the API with the single item parameter
+	url := fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%v.json", item)
+	resp, err := http.Get(url)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Unmarshal the response body into an interface{}
+	var responseData interface{}
+	err = json.Unmarshal(body, &responseData)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Cache the result with a 5 minute expiration time
+	AddToCacheWithExpiration(cacheKey, responseData, 5*time.Minute)
+
+	// Write the result as the response
+	c.Header("Content-Type", "application/json")
+	c.JSON(http.StatusOK, responseData)
 }
