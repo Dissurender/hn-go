@@ -11,13 +11,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// "https://hacker-news.firebaseio.com/v0/topstories.json"
+// "https://hacker-news.firebaseio.com/v0/item/%d.json", id
+
 func HandleAPIRequest(c *gin.Context) {
 
 	// Check if the results are already cached
 	cacheKey := "results"
 	cachedResult, found := GetFromCache(cacheKey)
 	if found {
-		// If the results are cached, return them directly
+		// If the results are cached, return them
 		result, ok := cachedResult.([]interface{})
 
 		if !ok {
@@ -31,7 +34,7 @@ func HandleAPIRequest(c *gin.Context) {
 		return
 	}
 
-	// Make a request to another API
+	// Make a request to HN API
 	resp, err := http.Get("https://hacker-news.firebaseio.com/v0/topstories.json")
 
 	if err != nil {
@@ -40,7 +43,7 @@ func HandleAPIRequest(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	// Read the response body
+	// Read response body
 	body, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
@@ -48,7 +51,7 @@ func HandleAPIRequest(c *gin.Context) {
 		return
 	}
 
-	// Unmarshal the response body into a slice of integers
+	// Unmarshal the response body into a slice of int
 	var data []int
 	err = json.Unmarshal(body, &data)
 
@@ -57,7 +60,7 @@ func HandleAPIRequest(c *gin.Context) {
 		return
 	}
 
-	// Make additional requests to the same API with each integer as an ID parameter concurrently
+	// Make additional requests to the HN API with each integer as an ID parameter concurrently
 	var wg sync.WaitGroup
 	results := make([]interface{}, len(data))
 	for i, id := range data {
@@ -72,7 +75,7 @@ func HandleAPIRequest(c *gin.Context) {
 				// If the result is cached, add it to the result slice
 				results[i] = cachedResult
 			} else {
-				// If the result is not cached, make the API request and cache the result
+				// If the result is not cached, make the HN API request and cache the result
 				url := fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%d.json", id)
 				resp, err := http.Get(url)
 
