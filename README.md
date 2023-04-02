@@ -1,6 +1,6 @@
 [![](https://img.shields.io/github/issues/dissurender/hn-go)](https://github.com/Dissurender/hn-go/issues) [![](https://img.shields.io/github/license/dissurender/hn-go)](https://github.com/Dissurender/hn-go/blob/main/LICENSE) ![](https://img.shields.io/github/languages/top/dissurender/hn-go)
 
-# HN-Bored
+# HN-Go
 
 ## Description
 
@@ -13,7 +13,7 @@ Hn-go is an API based on [HackerNews](https://news.ycombinator.com) created by [
 
 ## Table of Contents
 
-- [HN-Bored](#hn-bored)
+- [HN-Go](#hn-go)
   - [Description](#description)
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
