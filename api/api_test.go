@@ -18,7 +18,7 @@ func TestHandleAPIRequest(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			HandleAPIRequest(tt.args.c)
+			HandleAPIRequestBest(tt.args.c)
 		})
 	}
 }

@@ -7,17 +7,15 @@ type Base struct {
 	Type        string `json:"type" binding:"required"`
 	By          string `json:"by"`
 	Time        int    `json:"time"`
-	Kids        []Kid  `json:"kids"`
-	Dead        bool   `json:"dead"`
-	Deleted     bool   `json:"deleted"`
+	Kids        []int  `json:"kids"`
+	Dead        bool   `json:"-"`
+	Deleted     bool   `json:"-"`
 	Descendants int    `json:"descendants"`
 	Score       int    `json:"score"`
 	Title       string `json:"title"`
 	URL         string `json:"url"`
-}
 
-type Kid struct {
-	Base   Base
-	Parent int    `json:"parent"`
-	Text   string `json:"text"`
+	// comment model additional fields
+	Parent int    `json:"parent,omitempty"`
+	Text   string `json:"text,omitempty"`
 }

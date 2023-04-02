@@ -14,14 +14,14 @@ import (
 // "https://hacker-news.firebaseio.com/v0/topstories.json"
 // "https://hacker-news.firebaseio.com/v0/item/%d.json", id
 
-func HandleAPIRequest(c *gin.Context) {
+func HandleAPIRequestBest(c *gin.Context) {
 
 	// Check if the results are already cached
 	cacheKey := "results"
 	cachedResult, found := GetFromCache(cacheKey)
 	if found {
 		// If the results are cached, return them
-		result, ok := cachedResult.([]interface{})
+		result, ok := cachedResult.([]int)
 
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "cached result is of invalid type"})
@@ -33,6 +33,11 @@ func HandleAPIRequest(c *gin.Context) {
 		c.JSON(http.StatusOK, result)
 		return
 	}
+
+	/*
+	 * Look into refactoring the primary GET request into a helper function
+	 * for use throughout API
+	 */
 
 	// Make a request to HN API
 	resp, err := http.Get("https://hacker-news.firebaseio.com/v0/topstories.json")
@@ -93,8 +98,8 @@ func HandleAPIRequest(c *gin.Context) {
 					return
 				}
 
-				// Unmarshal the response body into an interface{}
-				var responseData interface{}
+				// Unmarshal the response body into the Base model
+				var responseData Base
 				err = json.Unmarshal(body, &responseData)
 
 				if err != nil {

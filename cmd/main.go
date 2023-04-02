@@ -14,7 +14,7 @@ func main() {
 
 	// Lock this to host machine in Prod
 	r.Use(cors.Middleware(cors.Config{
-		Origins:         "http://localhost",
+		Origins:         "*",
 		Methods:         "GET",
 		RequestHeaders:  "Origin, Authorization, Content-Type",
 		ExposedHeaders:  "",
@@ -25,11 +25,11 @@ func main() {
 
 	api.InitializeCache()
 
-	r.GET("/api/best", api.HandleAPIRequest)
+	r.GET("/api/best", api.HandleAPIRequestBest)
 
 	// Sort cached items and send to client
-	r.GET("/api/new", api.HandleAPIRequest)
-	r.GET("/api/top", api.HandleAPIRequest)
+	// r.GET("/api/new", api.HandleAPIRequest)
+	// r.GET("/api/top", api.HandleAPIRequest)
 
 	r.GET("/api/:item", api.HandleItemRequest)
 
