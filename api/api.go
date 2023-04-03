@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -21,7 +21,7 @@ func HandleAPIRequestBest(c *gin.Context) {
 	cachedResult, found := GetFromCache(cacheKey)
 	if found {
 		// If the results are cached, return them
-		result, ok := cachedResult.([]int)
+		result, ok := cachedResult.([]interface{})
 
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "cached result is of invalid type"})
@@ -49,7 +49,7 @@ func HandleAPIRequestBest(c *gin.Context) {
 	defer resp.Body.Close()
 
 	// Read response body
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -91,7 +91,7 @@ func HandleAPIRequestBest(c *gin.Context) {
 				defer resp.Body.Close()
 
 				// Read the response body
-				body, err := ioutil.ReadAll(resp.Body)
+				body, err := io.ReadAll(resp.Body)
 
 				if err != nil {
 					fmt.Println("Error reading response body:", err)
@@ -146,7 +146,7 @@ func HandleItemRequest(c *gin.Context) {
 	defer resp.Body.Close()
 
 	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
