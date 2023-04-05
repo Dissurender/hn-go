@@ -65,57 +65,7 @@ func HandleAPIRequestBest(c *gin.Context) {
 		return
 	}
 
-	// Make additional requests to the HN API with each integer as an ID parameter concurrently
-	var wg sync.WaitGroup
-	results := make([]interface{}, len(data))
-	for i, id := range data {
-		wg.Add(1)
-		go func(i int, id int) {
-			defer wg.Done()
-
-			// Check if the result for this ID is already cached
-			cacheKey := fmt.Sprintf("story-%v", id)
-			cachedResult, found := GetFromCache(cacheKey)
-			if found {
-				// If the result is cached, add it to the result slice
-				results[i] = cachedResult
-			} else {
-				// If the result is not cached, make the HN API request and cache the result
-				url := fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%d.json", id)
-				resp, err := http.Get(url)
-
-				if err != nil {
-					fmt.Println("Error making request to API:", err)
-					return
-				}
-				defer resp.Body.Close()
-
-				// Read the response body
-				body, err := io.ReadAll(resp.Body)
-
-				if err != nil {
-					fmt.Println("Error reading response body:", err)
-					return
-				}
-
-				// Unmarshal the response body into the Base model
-				var responseData Base
-				err = json.Unmarshal(body, &responseData)
-
-				if err != nil {
-					fmt.Println("Error unmarshalling response body:", err)
-					return
-				}
-
-				// Cache the result
-				fmt.Println("Added key to cache:", cacheKey)
-				AddToCache(cacheKey, responseData)
-
-				results[i] = responseData
-			}
-		}(i, id)
-	}
-	wg.Wait()
+	results := retrieveKids(c, data)
 
 	// Cache the results and return them as the response
 	AddToCache(cacheKey, results)
@@ -177,34 +127,32 @@ func HandleItemRequest(c *gin.Context) {
 	}
 
 	// Cache the result with a 5 minute expiration time
-	AddToCacheWithExpiration(cacheKey, responseData, 5*time.Minute)
+	AddToCacheWithExpiration(cacheKey, responseDataWithKids, 5*time.Minute)
 
 	// Write the result as the response
 	c.Header("Content-Type", "application/json")
 	c.JSON(http.StatusOK, responseDataWithKids)
 }
 
-func retrieveKids(c *gin.Context, kids []int) []interface{} {
+func retrieveKids(c *gin.Context, data []int) []interface{} {
 
-	comments := make([]interface{}, len(kids))
-
-	// Check if the result for this item is already cached
 	// Make additional requests to the HN API with each integer as an ID parameter concurrently
 	var wg sync.WaitGroup
-	for i, kid := range kids {
+	results := make([]interface{}, len(data))
+	for i, id := range data {
 		wg.Add(1)
-		go func(i int, kid int) {
+		go func(i int, id int) {
 			defer wg.Done()
 
 			// Check if the result for this ID is already cached
-			cacheKey := fmt.Sprintf("story-%v", kid)
+			cacheKey := fmt.Sprintf("story-%v", id)
 			cachedResult, found := GetFromCache(cacheKey)
 			if found {
 				// If the result is cached, add it to the result slice
-				comments[i] = cachedResult
+				results[i] = cachedResult
 			} else {
 				// If the result is not cached, make the HN API request and cache the result
-				url := fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%d.json", kid)
+				url := fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%d.json", id)
 				resp, err := http.Get(url)
 
 				if err != nil {
@@ -222,7 +170,7 @@ func retrieveKids(c *gin.Context, kids []int) []interface{} {
 				}
 
 				// Unmarshal the response body into the Base model
-				var responseData Comment
+				var responseData Base
 				err = json.Unmarshal(body, &responseData)
 
 				if err != nil {
@@ -230,11 +178,15 @@ func retrieveKids(c *gin.Context, kids []int) []interface{} {
 					return
 				}
 
-				comments[i] = responseData
+				// Cache the result
+				fmt.Println("Added key to cache:", cacheKey)
+				AddToCache(cacheKey, responseData)
+				results[i] = responseData
+
 			}
-		}(i, kid)
+		}(i, id)
 	}
 	wg.Wait()
 
-	return comments
+	return results
 }
