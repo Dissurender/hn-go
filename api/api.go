@@ -153,11 +153,27 @@ func HandleItemRequest(c *gin.Context) {
 	}
 
 	// Unmarshal the response body into an interface{}
-	var responseData interface{}
+	var responseData Base
 	err = json.Unmarshal(body, &responseData)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	buildComments := retrieveKids(c, responseData.Kids)
+
+	responseDataWithKids := BaseWithKids{
+		ID:          responseData.ID,
+		Type:        responseData.Type,
+		By:          responseData.By,
+		Time:        responseData.Time,
+		Kids:        buildComments,
+		Dead:        responseData.Dead,
+		Deleted:     responseData.Deleted,
+		Descendants: responseData.Descendants,
+		Score:       responseData.Score,
+		Title:       responseData.Title,
+		URL:         responseData.URL,
 	}
 
 	// Cache the result with a 5 minute expiration time
@@ -165,5 +181,60 @@ func HandleItemRequest(c *gin.Context) {
 
 	// Write the result as the response
 	c.Header("Content-Type", "application/json")
-	c.JSON(http.StatusOK, responseData)
+	c.JSON(http.StatusOK, responseDataWithKids)
+}
+
+func retrieveKids(c *gin.Context, kids []int) []interface{} {
+
+	comments := make([]interface{}, len(kids))
+
+	// Check if the result for this item is already cached
+	// Make additional requests to the HN API with each integer as an ID parameter concurrently
+	var wg sync.WaitGroup
+	for i, kid := range kids {
+		wg.Add(1)
+		go func(i int, kid int) {
+			defer wg.Done()
+
+			// Check if the result for this ID is already cached
+			cacheKey := fmt.Sprintf("story-%v", kid)
+			cachedResult, found := GetFromCache(cacheKey)
+			if found {
+				// If the result is cached, add it to the result slice
+				comments[i] = cachedResult
+			} else {
+				// If the result is not cached, make the HN API request and cache the result
+				url := fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%d.json", kid)
+				resp, err := http.Get(url)
+
+				if err != nil {
+					fmt.Println("Error making request to API:", err)
+					return
+				}
+				defer resp.Body.Close()
+
+				// Read the response body
+				body, err := io.ReadAll(resp.Body)
+
+				if err != nil {
+					fmt.Println("Error reading response body:", err)
+					return
+				}
+
+				// Unmarshal the response body into the Base model
+				var responseData Comment
+				err = json.Unmarshal(body, &responseData)
+
+				if err != nil {
+					fmt.Println("Error unmarshalling response body:", err)
+					return
+				}
+
+				comments[i] = responseData
+			}
+		}(i, kid)
+	}
+	wg.Wait()
+
+	return comments
 }
