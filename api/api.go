@@ -178,9 +178,9 @@ func retrieveKids(c *gin.Context, data []int) []interface{} {
 					return
 				}
 
-				// Cache the result
-				fmt.Println("Added key to cache:", cacheKey)
-				AddToCache(cacheKey, responseData)
+				// // Cache the result
+				// fmt.Println("Added key to cache:", cacheKey)
+				// AddToCache(cacheKey, responseData)
 				results[i] = responseData
 
 			}
