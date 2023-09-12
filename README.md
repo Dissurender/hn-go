@@ -17,25 +17,15 @@ Hn-go is an API based on [HackerNews](https://news.ycombinator.com) created by [
   - [Description](#description)
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
-  - [Installation](#installation)
   - [Usage](#usage)
   - [How to Contribute](#how-to-contribute)
 
 ## Features
 
-- To be added
--
--
-
-## Installation
-
-Standard Node install behavior
-
-- `npm install`
+- Built-in cache for quick access to clean data
+- Concurrent api calls to greatly increase speed vs Node
 
 ## Usage
-
-To be used in tandem with my landing page project [Svelte-land](https://github.com/Dissurender/svelte-land)
 
 To run locally use `go run cmd/main.go` in your terminal
 
