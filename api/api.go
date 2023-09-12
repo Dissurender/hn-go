@@ -65,6 +65,77 @@ func HandleAPIRequestBest(c *gin.Context) {
 		return
 	}
 
+	results := retrieveKids(c, data)
+
+	// Cache the results and return them as the response
+	AddToCache(cacheKey, results)
+	c.Header("Content-Type", "application/json")
+	c.JSON(http.StatusOK, results)
+}
+
+func HandleItemRequest(c *gin.Context) {
+	item := c.Param("item")
+
+	// Check if the result for this item is already cached
+	cacheKey := fmt.Sprintf("story-%v", item)
+	cachedResult, found := GetFromCache(cacheKey)
+	if found {
+		// If the result is cached, return it directly
+		c.Header("Content-Type", "application/json")
+		c.JSON(http.StatusOK, cachedResult)
+		return
+	}
+
+	// Make a request to the API with the single item parameter
+	url := fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%v.json", item)
+	resp, err := http.Get(url)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Unmarshal the response body into an interface{}
+	var responseData Base
+	err = json.Unmarshal(body, &responseData)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	buildComments := retrieveKids(c, responseData.Kids)
+
+	responseDataWithKids := BaseWithKids{
+		ID:          responseData.ID,
+		Type:        responseData.Type,
+		By:          responseData.By,
+		Time:        responseData.Time,
+		Kids:        buildComments,
+		Dead:        responseData.Dead,
+		Deleted:     responseData.Deleted,
+		Descendants: responseData.Descendants,
+		Score:       responseData.Score,
+		Title:       responseData.Title,
+		URL:         responseData.URL,
+	}
+
+	// Cache the result with a 5 minute expiration time
+	AddToCacheWithExpiration(cacheKey, responseDataWithKids, 5*time.Minute)
+
+	// Write the result as the response
+	c.Header("Content-Type", "application/json")
+	c.JSON(http.StatusOK, responseDataWithKids)
+}
+
+func retrieveKids(c *gin.Context, data []int) []interface{} {
+
 	// Make additional requests to the HN API with each integer as an ID parameter concurrently
 	var wg sync.WaitGroup
 	results := make([]interface{}, len(data))
@@ -107,63 +178,15 @@ func HandleAPIRequestBest(c *gin.Context) {
 					return
 				}
 
-				// Cache the result
-				fmt.Println("Added key to cache:", cacheKey)
-				AddToCache(cacheKey, responseData)
-
+				// // Cache the result
+				// fmt.Println("Added key to cache:", cacheKey)
+				// AddToCache(cacheKey, responseData)
 				results[i] = responseData
+
 			}
 		}(i, id)
 	}
 	wg.Wait()
 
-	// Cache the results and return them as the response
-	AddToCache(cacheKey, results)
-	c.Header("Content-Type", "application/json")
-	c.JSON(http.StatusOK, results)
-}
-
-func HandleItemRequest(c *gin.Context) {
-	item := c.Param("item")
-
-	// Check if the result for this item is already cached
-	cacheKey := fmt.Sprintf("story-%v", item)
-	cachedResult, found := GetFromCache(cacheKey)
-	if found {
-		// If the result is cached, return it directly
-		c.Header("Content-Type", "application/json")
-		c.JSON(http.StatusOK, cachedResult)
-		return
-	}
-
-	// Make a request to the API with the single item parameter
-	url := fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%v.json", item)
-	resp, err := http.Get(url)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	defer resp.Body.Close()
-
-	// Read the response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Unmarshal the response body into an interface{}
-	var responseData interface{}
-	err = json.Unmarshal(body, &responseData)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Cache the result with a 5 minute expiration time
-	AddToCacheWithExpiration(cacheKey, responseData, 5*time.Minute)
-
-	// Write the result as the response
-	c.Header("Content-Type", "application/json")
-	c.JSON(http.StatusOK, responseData)
+	return results
 }
