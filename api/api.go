@@ -71,12 +71,12 @@ func HandleItemRequest(c *gin.Context) {
 
 */
 
+// retrieveKids concurrently fetches data from the cache or retrieve it from an API
 func retrieveKids(data []int) []interface{} {
 	var wg sync.WaitGroup
 	results := make([]interface{}, len(data))
 
-	// Mutex to protect concurrent writes to results.
-	mu := new(sync.Mutex)
+	mutex := new(sync.Mutex) // Mutex to protect concurrent writes to results.
 
 	for i, id := range data {
 		wg.Add(1)
@@ -86,10 +86,10 @@ func retrieveKids(data []int) []interface{} {
 			if err != nil {
 				return
 			}
-			// claim the mutex while mutating
-			mu.Lock()
+
+			mutex.Lock() // Claim the mutex while writing.
 			results[i] = item
-			mu.Unlock()
+			mutex.Unlock()
 		}(i, id)
 	}
 	wg.Wait()
@@ -106,7 +106,7 @@ func fetchOrRetrieveFromCache(id int) (interface{}, error) {
 		return cachedResult, nil
 	}
 
-	// If not in cache, fetch from the API.
+	// If the item is not in the cache, fetch it from the API.
 	url := fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%d.json", id)
 	resp, err := http.Get(url)
 	if err != nil {

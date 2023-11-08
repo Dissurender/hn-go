@@ -12,7 +12,6 @@ import (
 func main() {
 	r := gin.Default()
 
-	// Lock this to host machine in Prod
 	r.Use(cors.Middleware(cors.Config{
 		Origins:         "*",
 		Methods:         "GET",
@@ -26,12 +25,11 @@ func main() {
 	api.InitializeCache()
 
 	r.GET("/api/best", api.HandleAPIRequestBest)
+	r.GET("/api/:item", api.HandleItemRequest)
 
 	// Sort cached items and send to client
 	// r.GET("/api/new", api.HandleAPIRequest)
 	// r.GET("/api/top", api.HandleAPIRequest)
-
-	r.GET("/api/:item", api.HandleItemRequest)
 
 	r.Run(":8888") // listen and at "localhost:8080"
 }
