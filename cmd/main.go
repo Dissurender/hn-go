@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/dissurender/hn-news/api"
+	"github.com/dissurender/hn-go/api"
 	"github.com/gin-gonic/gin"
 
 	"github.com/itsjamie/gin-cors"

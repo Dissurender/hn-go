@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dissurender/hn-go/utils"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,12 +20,14 @@ func HandleAPIRequestBest(c *gin.Context) {
 	cacheKey := "results"
 	results, found := getResultsFromCache(cacheKey)
 	if found {
+		utils.Logger("Results found.")
 		c.JSON(http.StatusOK, results)
 		return
 	}
 
 	data, err := fetchTopStories()
 	if err != nil {
+		utils.Logger(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -37,6 +41,9 @@ func HandleAPIRequestBest(c *gin.Context) {
 func HandleItemRequest(c *gin.Context) {
 	itemID := c.Param("item")
 	cacheKey := fmt.Sprintf("story-%v", itemID)
+
+	utils.Logger(fmt.Sprintf("GET: %v", cacheKey))
+
 	responseData, found := getStoryFromCache(cacheKey)
 	if found {
 		c.JSON(http.StatusOK, responseData)
@@ -45,6 +52,7 @@ func HandleItemRequest(c *gin.Context) {
 
 	responseDataWithKids, err := fetchStoryWithKids(itemID)
 	if err != nil {
+		utils.Logger(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -85,6 +93,8 @@ func retrieveKids(data []int) []interface{} {
 		}(i, id)
 	}
 	wg.Wait()
+
+	utils.Logger(fmt.Sprintf("Number of results found: %v", len(results)))
 
 	return results
 }
