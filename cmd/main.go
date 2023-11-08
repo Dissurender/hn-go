@@ -33,5 +33,5 @@ func main() {
 
 	r.GET("/api/:item", api.HandleItemRequest)
 
-	r.Run() // listen and at "localhost:8080"
+	r.Run(":8888") // listen and at "localhost:8080"
 }
