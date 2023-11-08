@@ -204,7 +204,7 @@ func buildBaseWithKids(responseData Base, kidsData []interface{}) BaseWithKids {
 	}
 }
 
-// fetchItem makes a GET request to the provided URL and unmarshals the response into Base.
+// fetchItem makes a GET request and unmarshals the response into Base.
 func fetchItem(url string) (Base, error) {
 	resp, err := http.Get(url)
 	if err != nil {
