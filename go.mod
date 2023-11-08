@@ -1,4 +1,4 @@
-module github.com/dissurender/hn-news
+module github.com/dissurender/hn-go
 
 go 1.18
 
