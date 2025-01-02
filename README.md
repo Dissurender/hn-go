@@ -4,7 +4,7 @@
 
 ## Description
 
-Hn-go is an API based on [HackerNews](https://news.ycombinator.com) created by [ycombinator](https://www.ycombinator.com)
+Hn-go is an Proxy API to ingest and clean data from [HackerNews](https://news.ycombinator.com) created by [ycombinator](https://www.ycombinator.com)
 
 - I built this project to have a more accessible API for HN
 - This project ingests and creates a local cache of http response data from HN's firebase API.
@@ -18,7 +18,6 @@ Hn-go is an API based on [HackerNews](https://news.ycombinator.com) created by [
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
   - [Usage](#usage)
-  - [How to Contribute](#how-to-contribute)
 
 ## Features
 
@@ -29,7 +28,3 @@ Hn-go is an API based on [HackerNews](https://news.ycombinator.com) created by [
 
 To run locally use `go run cmd/main.go` in your terminal
 
-## How to Contribute
-
-Please veiw the issues tab or open a discussion for non-listed issues.
-Adhere to the [Contributor Covenant](https://www.contributor-covenant.org/)
